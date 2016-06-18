@@ -1,0 +1,36 @@
+@{title('Real-Time Movements')}
+
+<div class="menu">
+
+	<div class="input-label">Player name</div>
+	<div class="input">
+		<input type="text" id="name" value="Peter" placeholder="Your name" />
+	</div>
+
+	<div class="input-label">Game room</div>
+	<div class="input">
+		<input type="text" id="room" value="Family" placeholder="A room name" disabled="disabled" />
+	</div>
+
+	<div class="input-label">Choose your color</div>
+	<ul class="colors">
+		<li style="background-color:#DA4453"><span>#DA4453</span></li>
+		<li style="background-color:#FC6E51"><span>#FC6E51</span></li>
+		<li style="background-color:#A0D468"><span>#A0D468</span></li>
+		<li style="background-color:#48CFAD"><span>#48CFAD</span></li>
+		<li style="background-color:#4FC1E9"><span>#4FC1E9</span></li>
+		<li style="background-color:#5D9CEC"><span>#5D9CEC</span></li>
+		<li style="background-color:#AC92EC"><span>#AC92EC</span></li>
+		<li style="background-color:#EC87C0"><span>#EC87C0</span></li>
+		<li style="background-color:#656D78"><span>#656D78</span></li>
+	</ul>
+</div>
+<br />
+<br />
+<div class="center"><a href="http://docs.totaljs.com" class="linkbutton">DOCUMENTATION</a></div>
+
+<script>
+	$('.colors').on('click', 'li', function() {
+		location.href = '/' + $('#room').val().toLowerCase() + '/?color=' + $(this).find('span').text().substring(1) + '&name=' + encodeURIComponent($('#name').val());
+	});
+</script>

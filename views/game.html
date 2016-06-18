@@ -1,0 +1,157 @@
+@{title('Game')}
+
+<canvas id="c" width="600" height="400"></canvas>
+
+<script>
+
+	var canvas = new fabric.Canvas('c', { selection: false });
+	var user = {};
+	var users = [];
+	var ws = null;
+
+	// Init WebSocket connection
+	function ws_init() {
+		ws = new WebSocket(location.href.replace(/^https/gi, 'wss').replace(/^http/gi, 'ws'));
+
+		ws.onopen = function() {
+
+		};
+
+		ws.onclose = function(e) {
+			ws = null;
+		};
+
+		ws.onmessage = function(e) {
+
+			var message = JSON.parse(decodeURIComponent(e.data));
+			var player;
+
+			if (message.type === 'player') {
+				user = message;
+				return;
+			}
+
+			switch (message.type) {
+				case 'refresh':
+					game_refresh(message.players);
+					return;
+
+				case 'remove':
+					player = game_player(message.id);
+					if (!player)
+						return;
+					player.remove();
+					canvas.renderAll();
+					return;
+
+				case 'move':
+					player = game_player(message.id);
+					if (!player)
+						return;
+					player.setLeft(message.left).setTop(message.top);
+					canvas.renderAll();
+					return;
+			}
+		};
+	}
+
+	// Sends message
+	function ws_send(message) {
+		if (!ws)
+			return
+		message.id = user.id;
+		ws.send(encodeURIComponent(JSON.stringify(message)));
+		return true;
+	}
+
+	// Creates circle
+	function game_append(id, name, color, left, top, radius) {
+		var player = new fabric.Circle({ radius: radius, fill: '#' + color, left: left, top: top, selectable: false });
+		player.$id = id;
+		canvas.add(player);
+	}
+
+	// Refresh all players on the canvas
+	function game_refresh(online) {
+
+		var cache = {};
+		var players = canvas.getObjects().slice(0);
+
+		for (var i = 0, length = online.length; i < length; i++)
+			cache[online[i].id] = online[i];
+
+		for (var i = 0, length = players.length; i < length; i++) {
+			var player = players[i];
+
+			if (!player)
+				continue;
+
+			if (!cache[player.id]) {
+				player.remove();
+				continue;
+			}
+
+			player.setLeft(cache[player.id].left);
+			player.setTop(cache[player.id].top);
+			player.setRadius(cache[player.id].radius);
+			delete cache[player.id];
+		}
+
+		Object.keys(cache).forEach(function(key) {
+			var player = cache[key];
+			game_append(player.id, player.name, player.color, player.left, player.top, player.radius);
+		});
+
+		canvas.renderAll();
+	}
+
+	// Finds player
+	function game_player(id) {
+		var items = canvas.getObjects();
+		for (var i = 0, length = items.length; i < length; i++) {
+			if (items[i].$id === id)
+				return items[i];
+		}
+	}
+
+	// Movements
+	$(window).on('keydown', function(e) {
+
+		if (!ws || e.keyCode < 37 || e.keyCode > 40 || e.altKey || e.ctrlkey)
+			return;
+
+		// Finds your circle
+		var obj = game_player(user.id);
+		if (!obj)
+			return;
+
+		var left = obj.getLeft();
+		var top = obj.getTop();
+
+		switch (e.keyCode) {
+			case 37:
+				// left
+				left -= 5;
+				break;
+			case 38:
+				// up
+				top -= 5;
+				break;
+			case 39:
+				// right
+				left += 5;
+				break;
+			case 40:
+				// down
+				top += 5;
+				break;
+		}
+
+		// Sends data to server
+		ws_send({ type: 'move', left: left, top: top });
+	});
+
+	// Initialization
+	setTimeout(ws_init, 1000);
+
+</script>
