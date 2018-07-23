@@ -1,6 +1,6 @@
 exports.install = function() {
-	F.route('/{room}/', 'game');
-	F.websocket('/{room}/', websocket_room, ['json']);
+	ROUTE('/{room}/', 'game');
+	WEBSOCKET('/{room}/', websocket_room, ['json']);
 };
 
 function websocket_room(room) {
